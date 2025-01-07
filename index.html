@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Principal</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <nav>
+                <ul>
+                    <li><a href="#principal">Principal</a></li>
+                    <li><a href="#sobre-nosotros">Sobre Nosotros</a></li>
+                    <li><a href="#formulario">Formulario</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="content">
+            <section id="principal">
+                <h1>Bienvenido a nuestra Página</h1>
+                <p>Descubre cómo podemos ayudarte a cuidar tu bienestar socioemocional con herramientas innovadoras de inteligencia artificial.</p>
+            </section>
+            
+            <section id="sobre-nosotros">
+                <h2>Sobre Nosotros</h2>
+                <div class="cards">
+                    <div class="card">
+                        <h3>Visión</h3>
+                        <p>Ser una plataforma líder en el cuidado socioemocional de los estudiantes, ofreciendo soluciones tecnológicas efectivas y accesibles.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Misión</h3>
+                        <p>Brindar a los estudiantes herramientas innovadoras para identificar, entender y gestionar sus emociones de manera saludable.</p>
+                    </div>
+                </div>
+            </section>
+            <section id="formulario">
+                <h2>Formulario</h2>
+                <div class="formulario-respuesta">
+                    <!-- Formulario -->
+                    <form id="emotionalForm" class="formulario">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Pregunta</th>
+                                    <th>Respuesta</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>¿Te sientes feliz con frecuencia?</td>
+                                    <td><input type="text" name="pregunta1"></td>
+                                </tr>
+                                <tr>
+                                    <td>¿Consideras que manejas bien el estrés?</td>
+                                    <td><input type="text" name="pregunta2"></td>
+                                </tr>
+                                <tr>
+                                    <td>¿Te resulta fácil compartir tus emociones?</td>
+                                    <td><input type="text" name="pregunta3"></td>
+                                </tr>
+                                <tr>
+                                    <td>¿Te sientes apoyado/a por quienes te rodean?</td>
+                                    <td><input type="text" name="pregunta4"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button type="submit">Enviar Respuestas</button>
+                    </form>
+            
+                    <!-- Respuesta de la IA -->
+                    <div id="resultado" class="resultado">
+                        <h3>Resultado del Análisis</h3>
+                        <p>Aquí aparecerán tus resultados y recomendaciones.</p>
+                    </div>
+                </div>
+            </section> 
+            <script>
+               document.getElementById('emotionalForm').addEventListener('submit', async function(event) {
+    event.preventDefault(); // Evita que la página se recargue al enviar el formulario
+
+    // Obtiene las respuestas del usuario
+    const responses = {
+        pregunta1: document.querySelector('[name="pregunta1"]').value,
+        pregunta2: document.querySelector('[name="pregunta2"]').value,
+        pregunta3: document.querySelector('[name="pregunta3"]').value,
+        pregunta4: document.querySelector('[name="pregunta4"]').value
+    };
+
+    // Combina todas las respuestas en un texto
+    const combinedText = Object.values(responses).join(' ');
+
+    // Token de acceso para Hugging Face
+    const token = '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'; // Reemplázalo con tu token válido
+
+    try {
+        const response = await fetch('https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ inputs: combinedText })
+        });
+
+        const result = await response.json();
+
+        if (result && result[0]) {
+            const scores = result[0];
+            const highestScore = scores.reduce((prev, curr) => (curr.score > prev.score ? curr : prev), scores[0]);
+
+            let message = '';
+            switch (highestScore.label) {
+                case '1 star':
+                    message = `
+                        <p><strong>Tu estado emocional parece estar en un nivel bajo.</strong></p>
+                        <p>Es completamente normal sentirse abrumado o triste a veces. Sin embargo, queremos recordarte que no estás solo/a. Hablar con un amigo, un familiar o incluso escribir lo que sientes puede ayudarte a liberar esa carga emocional.</p>
+                        <p>Aquí tienes algunas ideas para sentirte mejor:</p>
+                        <ul>
+                            <li>Haz una pausa y respira profundamente durante unos minutos.</li>
+                            <li>Sal a caminar en un lugar tranquilo, como un parque o cerca de la naturaleza.</li>
+                            <li>Escucha música relajante o tu canción favorita.</li>
+                            <li>Considera hacer una actividad creativa como pintar, escribir o cocinar algo nuevo.</li>
+                            <li>Si la tristeza persiste, busca apoyo profesional. Hablar con un terapeuta puede marcar una gran diferencia.</li>
+                        </ul>`;
+                    break;
+                case '2 stars':
+                    message = `
+                        <p><strong>Parece que estás enfrentando algo de estrés o malestar.</strong></p>
+                        <p>Recuerda que está bien sentirse así; todos tenemos días difíciles. Lo importante es buscar maneras de cuidar tu bienestar.</p>
+                        <p>Algunas recomendaciones para aliviar el estrés:</p>
+                        <ul>
+                            <li>Dedica 15 minutos a meditar o practicar yoga.</li>
+                            <li>Desconéctate de redes sociales por un rato y enfócate en el momento presente.</li>
+                            <li>Habla con alguien de confianza sobre cómo te sientes.</li>
+                            <li>Realiza una lista de las cosas por las que estás agradecido/a.</li>
+                            <li>Haz ejercicio físico, como estiramientos suaves o una caminata rápida.</li>
+                        </ul>`;
+                    break;
+                case '3 stars':
+                    message = `
+                        <p><strong>Tu estado emocional parece estar en un punto neutral.</strong></p>
+                        <p>Esto indica que tal vez no te sientes mal, pero tampoco estás en tu mejor momento. Reflexionar sobre tus emociones y dedicarte tiempo a ti mismo/a puede ayudarte a mejorar tu bienestar.</p>
+                        <p>Prueba estas actividades para elevar tu estado de ánimo:</p>
+                        <ul>
+                            <li>Escucha un podcast o mira una película que te inspire.</li>
+                            <li>Sal a un lugar que te guste y disfruta del momento.</li>
+                            <li>Planifica algo que te emocione, como una salida o una reunión con amigos.</li>
+                            <li>Regálate un descanso y lee un buen libro.</li>
+                        </ul>`;
+                    break;
+                case '4 stars':
+                    message = `
+                        <p><strong>¡Te encuentras en un buen estado emocional!</strong></p>
+                        <p>Sigue manteniendo las actividades que te hacen sentir feliz y pleno/a. Aprovecha esta energía positiva para inspirar a los demás.</p>`;
+                    break;
+                case '5 stars':
+                    message = `
+                        <p><strong>¡Tu estado emocional es excelente!</strong></p>
+                        <p>Es fantástico verte en este nivel de bienestar. Disfruta del momento y sigue nutriendo aquello que te hace sentir tan bien.</p>`;
+                    break;
+            }
+
+            document.getElementById('resultado').innerHTML = `
+                <h3>Resultado del Análisis</h3>
+                ${message}
+            `;
+        } else {
+            document.getElementById('resultado').innerHTML = '<p>No se pudo analizar tu estado emocional.</p>';
+        }
+    } catch (error) {
+        console.error('Error al conectar con Hugging Face:', error);
+        document.getElementById('resultado').innerHTML = '<p>Hubo un error al procesar tus respuestas. Intenta nuevamente más tarde.</p>';
+    }
+});
+
+            </script>
+        </main>
+    </div>
+</body>
+</html>
